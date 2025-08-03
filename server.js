@@ -60,21 +60,23 @@ function generateRoomCode() {
     return code;
 }
 
-function leaveRoom(socket) {
-    for (const roomCode in games) {
+function handleLeave(socket) {
+    // Encuentra la sala en la que está el jugador
+    const roomCode = Array.from(socket.rooms).find(room => room !== socket.id);
+
+    if (roomCode && games[roomCode]) {
         const room = games[roomCode];
-        const playerIndex = room.players.findIndex(p => p.id === socket.id);
-        if (playerIndex !== -1) {
-            room.players.splice(playerIndex, 1);
-            socket.leave(roomCode);
-            console.log(`Jugador ${socket.id} ha salido de la sala ${roomCode}`);
-            if (room.players.length === 0) {
-                delete games[roomCode];
-                console.log(`Sala ${roomCode} eliminada por estar vacía.`);
-            } else {
-                io.to(roomCode).emit('gameUpdate', room);
-            }
-            break;
+        // Elimina al jugador del array de jugadores
+        room.players = room.players.filter(p => p.id !== socket.id);
+        
+        console.log(`Jugador ${socket.id} ha salido de la sala ${roomCode}`);
+
+        if (room.players.length === 0) {
+            delete games[roomCode];
+            console.log(`Sala ${roomCode} eliminada por estar vacía.`);
+        } else {
+            // Notifica a los jugadores restantes sobre la actualización
+            io.to(roomCode).emit('gameUpdate', room);
         }
     }
 }
@@ -136,12 +138,12 @@ io.on('connection', (socket) => {
     });
 
     socket.on('leaveGame', () => {
-        leaveRoom(socket);
+        handleLeave(socket);
     });
 
     socket.on('disconnect', () => {
         console.log(`Un usuario se ha desconectado: ${socket.id}`);
-        leaveRoom(socket);
+        handleLeave(socket);
     });
 });
 
