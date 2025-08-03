@@ -6,8 +6,13 @@ const cors = require('cors');
 
 const app = express();
 
+// Configuración de CORS para permitir la conexión desde tu sitio web
 const corsOptions = {
-  origin: ["https://javierrivas.com.mx", "http://localhost:5500"], // Permite tu dominio y desarrollo local
+  origin: [
+      "https://javierrivas.com.mx", 
+      "https://www.javierrivas.com.mx", // Añadido para incluir 'www'
+      "http://localhost:5500" // Para desarrollo local
+    ],
   methods: ["GET", "POST"]
 };
 
@@ -67,7 +72,6 @@ function leaveRoom(socket) {
                 delete games[roomCode];
                 console.log(`Sala ${roomCode} eliminada por estar vacía.`);
             } else {
-                // Notificar a los demás que un jugador se fue
                 io.to(roomCode).emit('gameUpdate', room);
             }
             break;
